@@ -6,7 +6,7 @@ Status: Proposed
 
 ## Abstract
 
-The proposed feature is Skyscope, a Graphical User Interface (GUI) that brings observability capabilities to Valkey. Skyscope addresses critical observability and monitoring gaps identified through community analysis and customer research, particularly focusing on hot key detection, cluster visualization, and real-time metrics collection. Skyscope is a React and Node.js application, packaged with Electron to work as a cross-platform desktop application. The design includes a timeseries metrics service for historic observability trends, built into the desktop app by default, yet capable of running as a standalone service if needed. The application design presented in this RFC is not set in stone, and submitting this RFC serves as a mechanism to gather community feedback about design decisions and implementation details before finalizing the architecture and feature set.
+The proposed feature is Skyscope, a Graphical User Interface (GUI) that brings observability capabilities to Valkey. Skyscope addresses critical observability and monitoring gaps identified through community analysis and customer research, particularly focusing on hot key detection, cluster visualization, and near real-time metrics collection. Skyscope is a React and Node.js application, packaged with Electron to work as a cross-platform desktop application. The design includes a timeseries metrics service for historic observability trends, built into the desktop app by default, yet capable of running as a standalone service if needed. The application design presented in this RFC is not set in stone, and submitting this RFC serves as a mechanism to gather community feedback about design decisions and implementation details before finalizing the architecture and feature set.
 
 ## Motivation
 
@@ -22,7 +22,7 @@ Valkey deployments face four primary observability challenges that impact operat
 
 The Valkey community has identified these challenges through engagement on [observability GitHub issues](https://github.com/valkey-io/valkey/issues?q=is%3Aissue%20state%3Aopen%20observability). [Issues #852](https://github.com/valkey-io/valkey/issues/852), [#2127](https://github.com/valkey-io/valkey/pull/2127), [#2128](https://github.com/valkey-io/valkey/issues/2128), and [#1880](https://github.com/valkey-io/valkey/issues/1880) in the Valkey repository demonstrate demand for slot level metrics and efficient hot key identification. Community analysis also shows preference for native observability features for enhanced observability with structured access to internal metrics, command statistics, and performance indicators. (i.e. [Issue #1167](https://github.com/valkey-io/valkey/issues/1167)).
 
-Currently, no comprehensive observability solution exists that addresses these specific Valkey operational challenges in a unified interface. The Valkey community lacks a dedicated tool that combines real-time monitoring, hot key detection, and cluster visualization tailored to Valkey's architecture and performance characteristics. This initiative fills the observability gap by providing a native solution designed for Valkey deployments, addressing the absence of purpose-built tooling in the current landscape.
+Currently, no comprehensive observability solution exists that addresses these specific Valkey operational challenges in a unified interface. The Valkey community lacks a dedicated tool that combines near real-time monitoring, hot key detection, and cluster visualization tailored to Valkey's architecture and performance characteristics. This initiative fills the observability gap by providing a native solution designed for Valkey deployments, addressing the absence of purpose-built tooling in the current landscape.
 
 ## Design Considerations
 
@@ -34,11 +34,11 @@ The application proposes a modular, three-component architecture designed for pe
 
 **1. Frontend:** Built with React and Redux, the frontend runs as a cross-platform desktop application using Electron. This provides a native desktop experience while leveraging familiar web technologies and avoiding browser limitations.
 
-The frontend operates within the Electron renderer process and connects to the backend via WebSockets to receive real-time metric updates and request historical data. It receives specific metric types (memory, Central Processing Unit (CPU)) and displays them in tables and charts. When users select a time range, the frontend sends a query over WebSocket and receives filtered data for visualization.
+The frontend operates within the Electron renderer process and connects to the backend via WebSockets to receive near real-time metric updates and request historical data. It receives specific metric types (memory, Central Processing Unit (CPU)) and displays them in tables and charts. When users select a time range, the frontend sends a query over WebSocket and receives filtered data for visualization.
 
 **2. Backend for the Frontend:** A Node.js process that runs locally alongside the frontend and communicates with Valkey instances over WebSockets. It manages connection state, basic authentication, and command execution, returning responses for features like the integrated Command Line Interface (CLI). 
 
-The backend runs in the Electron main process and hosts a WebSocket server that manages subscriptions, streams live updates to the frontend, and handles historical queries. It communicates with the metrics server over a local or remote HTTP API, using basic authentication. For real-time updates, the backend reads new entries from NDJSON files on disk, filters by metric type, and emits them to subscribed clients. For historical queries, it fetches rows from the API, filters by timestamp, buckets the results (e.g., per 5s or 1m), and sends them to the frontend.
+The backend runs in the Electron main process and hosts a WebSocket server that manages subscriptions, streams live updates to the frontend, and handles historical queries. It communicates with the metrics server over a local or remote HTTP API, using basic authentication. For near real-time updates, the backend reads new entries from NDJSON files on disk, filters by metric type, and emits them to subscribed clients. For historical queries, it fetches rows from the API, filters by timestamp, buckets the results (e.g., per 5s or 1m), and sends them to the frontend.
 
 **3. Timeseries Metrics Service:** This process supports historical trend analysis without introducing external dependencies. This component polls metrics from Valkey clusters or instances at configurable intervals, with default settings to be determined based on further testing and server load analysis. It writes data to efficient local storage, enabling time-series visualizations of CPU load, memory usage, hot keys, and hot slots. Future plans include the ability to store metrics in remote storage (such as S3 or a timeseries DB). While it runs locally by default, the service can also be deployed remotely.
 
@@ -72,7 +72,7 @@ The dashboard also visualizes historical trends, made possible by the timeseries
 
 Cluster visualization shows the topology of nodes and slot distribution with intuitive visual representation. It highlights master-replica topology and overlays slot assignments and load distribution with heat maps.
 
-Visual heat maps (post MVP) highlight CPU and memory usage across cluster nodes, leveraging slot-level metrics. The visualization updates in real-time as new data becomes available, providing immediate feedback on cluster performance characteristics. Historical tracking enables trend analysis of patterns over time, allowing builders to identify recurring performance issues and plan capacity adjustments. An alert mechanism provides configurable notifications for access pattern anomalies, with thresholds that can be adjusted based on application requirements and cluster characteristics.
+Visual heat maps (post MVP) highlight CPU and memory usage across cluster nodes, leveraging slot-level metrics. The visualization updates in near real-time as new data becomes available, providing immediate feedback on cluster performance characteristics. Historical tracking enables trend analysis of patterns over time, allowing builders to identify recurring performance issues and plan capacity adjustments. An alert mechanism provides configurable notifications for access pattern anomalies, with thresholds that can be adjusted based on application requirements and cluster characteristics.
 
 ### Hot Key Detection and Visualization
 
@@ -80,7 +80,7 @@ Hot key detection addresses one of the most critical customer requirements throu
 
 When a hot key detection cycle begins, the system first queries slot-level metrics across all cluster nodes to identify slots experiencing high activity across the four monitored dimensions. Slots exceeding configurable thresholds trigger the second phase, where targeted SCAN operations examine keys within those specific slots. This approach reduces the scanning scope from potentially millions of keys across the entire cluster, to hundreds or thousands of keys within identified hot slots.
 
-We store hot key data in a structured format that includes timestamp, instance identifier, key name, access count, memory bytes, and slot identifier for analysis and correlation with cluster performance metrics. This data structure enables both real-time monitoring and historical analysis, supporting capacity planning and performance optimization workflows.
+We store hot key data in a structured format that includes timestamp, instance identifier, key name, access count, memory bytes, and slot identifier for analysis and correlation with cluster performance metrics. This data structure enables both near real-time monitoring and historical analysis, supporting capacity planning and performance optimization workflows.
 
 ### Community Engagement and Development Strategy
 
